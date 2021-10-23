@@ -1,9 +1,9 @@
 '''
 Author: Whatever it takes
 Date: 2021-10-22 21:13:58
-LastEditTime: 2021-10-23 12:29:17
-Description: 实现ADP
-FilePath: \initial\q-learning.py
+LastEditTime: 2021-10-23 15:30:23
+Description: fail --- 实现ADP --- 由于env.step是不断向前推进的，所以不能用一个循环得到在一个固定的状态下做出所有选项的值
+FilePath: \initial\adp_2.py
 一份伏特加，加一点青柠，姜汁，啤酒，最重要的是，还有一点爱
 '''
 import gym
@@ -19,18 +19,25 @@ class ADP(object):
         self.gamma = gamma
     def learn(self, env, obs, act, reward, done):
         # 这里还有两个大循环
-        # (1)遍历所有action
+        # (1)遍历所有action_hat
         for action in range(env.action.space.n):
             # 得到所有的s_prime
-            obs_prime, reward, done, info = env.step(action)   
+            obs_prime, reward, done, info = env.step(action)   # 由于env.step是不断向前推进的，所以不能用一个循环得到在一个固定的状态下做出所有选项的值
             self.q[obs, action] += self.alpha * (reward + self.gamma * self.q[obs_prime, act]) # alpha 需要换成某种分布
         # (2)
-        a_hat_star = agent.sample(obs)
-        # (3)用某种函数计算s_hat_prime
-        
-        # (4)赋值下一步状态, 在采样路径 和 时间步骤上继续循环
+        a_hat_star = agent.adp_sample(obs)
+        # (3)用某种函数计算s_hat_prime --> 先换成网络 --> 本来是由系统决定 替换成env决定
+        obs_hat_prime, _, _, _ = env.step(action)
+        # (4)赋值下一步状态, 在采样路径 和 时间步骤 上继续循环
 
-
+    def adp_sample(self):
+        '''选择ADP算法的下一个状态'''
+        # 先用贪婪策略选择
+        pick_q = self.q[obs, :]
+        maxq = np.max(pick_q)
+        all_action = np.where(pick_q == maxq)[0] # 输出坐标 -- 对应相应的行为
+        action = np.random.choice(all_action)
+        return action
     def sample(self, obs):
         pick_q = self.q[obs, :]
         maxq = np.max(pick_q)
